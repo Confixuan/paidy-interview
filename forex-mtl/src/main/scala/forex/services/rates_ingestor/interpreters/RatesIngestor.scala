@@ -1,6 +1,6 @@
 package forex.services.rates_ingestor.interpreters
 
-import cats.Monad
+import cats.MonadError
 import cats.effect.Timer
 import com.github.blemale.scaffeine.{ Cache, Scaffeine }
 import forex.config.RatesIngestorConfig
@@ -11,8 +11,10 @@ import forex.services.rates_ingestor.Algebra
 import cats.implicits._
 import com.typesafe.scalalogging.StrictLogging
 
-class RatesIngestor[F[_]: Monad: Timer](ratesDAO: repos.rates.Algebra[F], settings: RatesIngestorConfig)
-    extends Algebra[F]
+class RatesIngestor[F[_]: ({ type MonadErrorThrowable[T[_]] = MonadError[T, Throwable] })#MonadErrorThrowable: Timer](
+    ratesDAO: repos.rates.Algebra[F],
+    settings: RatesIngestorConfig
+) extends Algebra[F]
     with StrictLogging {
 
   private val cache: Cache[Rate.Pair, Rate] =
@@ -36,8 +38,8 @@ class RatesIngestor[F[_]: Monad: Timer](ratesDAO: repos.rates.Algebra[F], settin
       _ <- updateCache(cache, rates).pure[F]
     } yield ()
 
-  def refreshCache: F[Unit] =
-    (ingest >> implicitly[Timer[F]].sleep(settings.refreshInterval)).foreverM
+  override def refreshCache: F[Unit] =
+    (ingest.attempt >> implicitly[Timer[F]].sleep(settings.refreshInterval)).foreverM
 
   override def get(pair: Rate.Pair): F[Either[Error, Rate]] =
     cache.getIfPresent(pair).toRight[Error](Error.PairIsAbsent(pair)).pure[F]

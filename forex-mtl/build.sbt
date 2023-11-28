@@ -66,7 +66,28 @@ libraryDependencies ++= Seq(
   Libraries.scaffeine,
   Libraries.scalaLogging,
   Libraries.logback,
-  Libraries.scalaTest      % Test,
-  Libraries.scalaCheck     % Test,
-  Libraries.catsScalaCheck % Test
+  Libraries.scalaTest           % "test,it",
+  Libraries.scalaTestMockito    % "test,it",
+  Libraries.scalaCheck          % Test,
+  Libraries.catsScalaCheck      % Test,
+  Libraries.whiskyDockerTestKit % IntegrationTest
 )
+
+lazy val root =
+  (project in file("."))
+    .configs(IntegrationTest)
+    .settings(
+      Defaults.itSettings,
+      parallelExecution := false
+    )
+
+val validate = taskKey[Unit]("Format check and tests")
+validate := Def
+  .sequential(
+    Compile / scalafmt / test,
+    Test / scalafmt / test,
+    Sbt / scalafmt / test,
+    Test / test,
+    IntegrationTest / test
+  )
+  .value
