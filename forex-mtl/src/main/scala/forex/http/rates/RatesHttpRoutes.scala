@@ -40,6 +40,7 @@ class RatesHttpRoutes[F[_]: Sync](rates: RatesProgram[F]) extends Http4sDsl[F] {
             BadRequest(s"Invalid request params: ${nel.map(_.getMessage()).toList.mkString(",")}")
         )
         .merge
+    case _ => NotFound(s"Please call host/rates with param 'from' and 'to'")
   }
 
   val routes: HttpRoutes[F] = Router(
