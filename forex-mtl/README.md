@@ -16,16 +16,19 @@ graph TD
 
 ## Run locally
 1. start `one-frame` service in 8080 locally
-```docker
+```bash
 docker run -p 8080:8080 paidyinc/one-frame
 ```
 2. run `forex` service
-```sbt
+```bash
 sbt run
 ```
-
+3. call the service
+```bash
+curl "localhost:8081/rates?from=USD&to=JPY"
+```
 ## Test
-```sbt
+```bash
 sbt validate
 ```
 
